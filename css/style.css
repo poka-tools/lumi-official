@@ -25,6 +25,104 @@ body { margin: 0; font-family: -apple-system, "Hiragino Sans", sans-serif;
 .metric-grid > div + div { border-left: 1px solid #f2e6ec; }
 .metric-grid .muted { display: block; margin-bottom: 3px; }
 .metric-grid strong { font-size: 15px; }
+.mom-up { color: var(--pink); font-weight: 700; }
+
+/* 今日の給与ヒーロー：このアプリの主役。働いた分が数字として見える */
+.today-hero { text-align: left;
+  background: linear-gradient(150deg, #ffffff 0%, #fff2f8 45%, #f3ecff 100%);
+  border: 1px solid #ffdfec; }
+.th-greet { font-size: 14px; font-weight: 600; color: var(--ink); margin-bottom: 2px; }
+.th-greet .th-heart { color: var(--pink); margin-left: 2px; }
+.th-label { font-size: 13px; color: var(--muted); }
+.th-amount { color: var(--pink); font-weight: 800; letter-spacing: -1.5px;
+  font-size: clamp(38px, 11vw, 50px); line-height: 1.05; margin: 2px 0 2px; }
+.th-empty { font-size: 13px; color: var(--muted); margin: 6px 0 0; }
+.th-break { background: var(--card); border-radius: 14px; padding: 2px 14px;
+  box-shadow: 0 2px 10px rgba(0,0,0,.05); margin: 12px 0 14px; }
+.th-brow { display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 0; font-size: 14px; }
+.th-brow + .th-brow { border-top: 1px solid #f4e8ee; }
+.th-brow span { display: inline-flex; align-items: center; gap: 6px; color: var(--muted); }
+.th-brow span .ic { width: 15px; height: 15px; }
+.th-brow strong { font-weight: 700; font-size: 15px; }
+.th-cta { display: flex; flex-direction: column; align-items: center; gap: 2px;
+  width: 100%; border: none; cursor: pointer; margin-top: 4px;
+  background: linear-gradient(135deg, var(--pink), #ff8bad); color: #fff;
+  border-radius: 16px; padding: 13px 14px; box-shadow: 0 6px 16px rgba(255, 92, 138, .28); }
+.th-cta:active { transform: scale(.98); }
+.th-cta-main { font-weight: 800; font-size: 16px; }
+.th-cta-sub { font-size: 12px; opacity: .92; }
+
+/* 保存後のお祝い（今日の給与が増えた体感） */
+.save-cele { text-align: center;
+  background: linear-gradient(160deg, #ffffff 0%, #fff2f8 50%, #f3ecff 100%); }
+.sc-spark { font-size: 26px; color: var(--purple); }
+.sc-greet { font-weight: 700; font-size: 15px; margin-top: 2px; }
+.sc-label { font-size: 13px; color: var(--muted); margin-top: 10px; }
+.sc-amount { color: var(--pink); font-weight: 800; letter-spacing: -1.5px;
+  font-size: clamp(38px, 11vw, 48px); line-height: 1.1; margin: 2px 0 4px; }
+.sc-backs { text-align: left; background: var(--card); border-radius: 14px;
+  padding: 2px 14px; box-shadow: 0 2px 10px rgba(0,0,0,.05); margin: 10px 0 4px; }
+.sc-back-row { display: flex; align-items: center; justify-content: space-between;
+  padding: 9px 0; font-size: 14px; }
+.sc-back-row + .sc-back-row { border-top: 1px solid #f4e8ee; }
+.sc-back-name { color: var(--ink); min-width: 0; }
+.sc-back-amt { font-weight: 700; color: var(--pink); flex: 0 0 auto; }
+.sc-back-amt.neg { color: #e0518a; }
+.sc-ok { margin-top: 14px; }
+
+/* 目標専用画面 */
+.goal-hero { text-align: center;
+  background: linear-gradient(160deg, #ffffff 0%, #f6f0ff 55%, #ffe9f2 100%);
+  border: 1px solid #eadfff; }
+.goal-hero.achieved { border-color: #ffd0e2;
+  background: linear-gradient(160deg, #fff8fb 0%, #ffe9f2 60%, #f3ecff 100%); }
+.goal-hero .gl-ico { color: var(--purple); }
+.goal-hero .gl-ico .ic { width: 34px; height: 34px; }
+.gl-badge { display: inline-block; background: var(--pink); color: #fff; font-weight: 800;
+  font-size: 13px; letter-spacing: .5px; padding: 4px 14px; border-radius: 999px; margin-bottom: 8px; }
+.gl-cap { color: var(--muted); font-size: 13px; }
+.gl-target { color: var(--pink); font-weight: 800; letter-spacing: -1.5px;
+  font-size: clamp(34px, 10vw, 46px); line-height: 1.1; margin: 2px 0 8px; }
+.goal-hero .goal-bar { margin: 4px 0 8px; }
+.gl-progress { display: flex; align-items: center; justify-content: space-between;
+  font-size: 13px; color: var(--muted); }
+.gl-progress strong { color: var(--pink); font-size: 15px; }
+.gl-remain { font-size: 15px; margin: 12px 0 14px; }
+.gl-remain strong { color: var(--pink); font-weight: 800; font-size: 20px; }
+.gl-empty-title { font-weight: 800; font-size: 18px; margin: 8px 0 6px; }
+.gl-empty-sub { color: var(--muted); font-size: 13px; line-height: 1.7; margin: 0 0 16px; }
+.gl-hints { list-style: none; margin: 4px 0 0; padding: 0; }
+.gl-hints li { display: flex; align-items: flex-start; gap: 10px; padding: 9px 0;
+  font-size: 14px; line-height: 1.6; }
+.gl-hints li + li { border-top: 1px solid #f4e8ee; }
+.gl-hints li.dim { color: var(--muted); }
+.gl-check { flex: 0 0 auto; width: 22px; height: 22px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center; font-weight: 800;
+  background: var(--pink-soft); color: var(--pink); font-size: 13px; }
+.gl-hints li.dim .gl-check { background: #f0eef2; color: var(--muted); }
+
+/* 収入履歴（月別リスト） */
+.hist-item { padding: 14px 16px; }
+.hist-head { display: flex; align-items: center; justify-content: space-between;
+  width: 100%; background: none; border: none; padding: 0; cursor: pointer; gap: 10px; }
+.hist-when { display: flex; flex-direction: column; gap: 2px; text-align: left; min-width: 0; }
+.hist-my { font-weight: 800; font-size: 16px; color: var(--ink); }
+.hist-days { font-size: 12px; color: var(--muted); }
+.hist-right { display: flex; align-items: center; gap: 6px; flex: 0 0 auto; }
+.hist-total { font-weight: 800; font-size: 18px; color: var(--pink); letter-spacing: -.4px; }
+.hist-chev { color: var(--pink); font-size: 20px; }
+.hist-bar { height: 6px; background: var(--pink-soft); border-radius: 999px; margin: 10px 0 0; overflow: hidden; }
+.hist-bar-fill { height: 100%; border-radius: 999px;
+  background: linear-gradient(90deg, var(--pink), var(--purple)); }
+.hist-detail { margin-top: 12px; }
+.hist-drow { display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 0; font-size: 14px; }
+.hist-drow + .hist-drow { border-top: 1px solid #f4e8ee; }
+.hist-drow span { color: var(--muted); }
+.hist-drow strong { font-weight: 700; }
+.hist-drow strong.neg { color: #e0518a; }
+.hist-dsep { height: 1px; background: #eee; margin: 6px 0; }
 .badge { background: var(--pink-soft); color: var(--pink); font-size: 11px;
   padding: 2px 8px; border-radius: 10px; margin-left: 8px; vertical-align: middle; }
 .muted { color: var(--muted); font-size: 13px; }

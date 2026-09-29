@@ -51,15 +51,15 @@
       <span>カレンダー</span></button>
     <button data-tab="record" class="fab" aria-label="記録を追加">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 6v12M6 12h12"/></svg></button>
-    <button data-tab="report" aria-label="レポート">
+    <button data-tab="report" aria-label="収入">
       <svg class="tab-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h16"/><path d="M7 20v-6M12 20V8M17 20v-9"/></svg>
-      <span>レポート</span></button>
-    <button data-tab="customers" aria-label="顧客">
-      <svg class="tab-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.5"/><path d="M5.5 19.5c0-3.6 2.9-6 6.5-6s6.5 2.4 6.5 6"/></svg>
-      <span>顧客</span></button>
+      <span>収入</span></button>
+    <button data-tab="goal" aria-label="目標">
+      <svg class="tab-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4.6"/><circle cx="12" cy="12" r=".9"/></svg>
+      <span>目標</span></button>
   </nav>
 
-  <!-- ヘッダー右上のメニューボタンから開く（顧客はボトムナビにあるため、ここは設定系の入口） -->
+  <!-- ヘッダー右上のメニューボタンから開く（顧客・履歴・マイページ・設定などの入口） -->
   <div id="drawerBackdrop" class="drawer-backdrop" aria-hidden="true"></div>
   <aside id="drawer" class="drawer" aria-hidden="true" inert>
     <div class="drawer-head">
@@ -67,6 +67,8 @@
       <button class="drawer-close" data-drawer-close aria-label="閉じる"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
     </div>
     <nav class="drawer-nav">
+      <button class="drawer-item" data-go="customers">顧客・イベント管理</button>
+      <button class="drawer-item" data-go="history">収入履歴</button>
       <button class="drawer-item" data-go="mypage">マイページ</button>
       <button class="drawer-item" data-go="settings">設定</button>
       <button class="drawer-item" data-go="help">ヘルプ（よくある質問）</button>

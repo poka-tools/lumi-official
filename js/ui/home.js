@@ -1,9 +1,10 @@
-import { state, shiftsOfMonth, prevMonth, loadAll } from '../state.js';
-import { put, saveProfile } from '../db.js';
+import { state, shiftsOfMonth, prevMonth } from '../state.js';
 import {
   monthlyEstimate, monthlyWorkedHours,
   incomeBreakdown, monthOverMonth, shiftTotal, workedHours, dayPaySummary,
+  shiftWage, nightPremium, shiftBackTotal, dailySeries,
 } from '../calc.js';
+import { renderDailyChart } from './dailychart.js';
 import { yen, signedYen, weekdayJa, esc, todayIso, shortDateJa } from '../format.js';
 import { drawDonut } from './donut.js';
 import { setEditingShift } from './record.js';
@@ -44,6 +45,16 @@ export async function renderHome(el) {
   const today = todayIso();
   const todayShift = cur.find((s) => s.date === today);
   const todayAmount = todayShift ? shiftTotal(wage, items, todayShift) : 0;
+
+  // 今日の給与の内訳（時給部分／深夜手当／バック）。深夜手当は時給合計から分離する。
+  const todayWageAll = todayShift ? shiftWage(wage, todayShift) : 0; // 時給＋深夜
+  const todayNight = todayShift ? nightPremium(wage, todayShift) : 0;
+  const todayHourly = Math.max(0, todayWageAll - todayNight);
+  const todayBack = todayShift ? shiftBackTotal(items, todayShift) : 0;
+
+  // 今月ダッシュボード用（出勤日数・1日平均）
+  const workDays = cur.filter((s) => !s.absent && !s.recordOnly).length;
+  const dayAvg = workDays ? Math.round(estimateAll / workDays) : 0;
 
   const monthLabel = state.month.replace('-', '年') + '月';
 
@@ -123,15 +134,42 @@ export async function renderHome(el) {
         <span class="goal-cta-chev">›</span>
       </button>`;
 
+  // ===== 今日の給与ヒーロー（このアプリの主役＝働いた成果を実感する）=====
+  const hasTodayInput = !!todayShift && !todayShift.absent && todayAmount !== 0;
+  const heroBreak = hasTodayInput ? `
+    <div class="th-break">
+      <div class="th-brow"><span>${icon('yen')} 時給</span><strong>${yen(todayHourly)}</strong></div>
+      ${todayBack !== 0 ? `<div class="th-brow"><span>${icon('money')} バック</span><strong>${yen(todayBack)}</strong></div>` : ''}
+      ${todayNight > 0 ? `<div class="th-brow"><span>${icon('moon')} 深夜手当</span><strong>${yen(todayNight)}</strong></div>` : ''}
+    </div>` : '';
+  const heroLabel = todayShift && todayShift.absent
+    ? '本日は欠勤'
+    : (todayShift && todayShift.confirmed ? '今日の給与' : '今日の給与（予想）');
+  const heroCtaMain = todayShift ? '今日の勤務を編集する' : '今日の勤務を記録する';
+  const heroCard = `
+    <div class="card today-hero">
+      <div class="th-greet">今日もおつかれさま<span class="th-heart">♡</span></div>
+      <div class="th-label">${heroLabel}</div>
+      <div class="th-amount" id="thAmount">${yen(todayAmount)}</div>
+      ${heroBreak}
+      ${!hasTodayInput ? '<div class="th-empty">まだ今日の勤務は記録されていません。</div>' : ''}
+      <button class="th-cta" id="thRecord" type="button">
+        <span class="th-cta-main">${heroCtaMain}</span>
+        <span class="th-cta-sub">たった5秒で記録できます</span>
+      </button>
+    </div>`;
+
   el.innerHTML = `
+    ${heroCard}
+
     <div class="card estimate-card">
-      <div class="estimate-head">${esc(monthLabel)}の見込み <span class="badge">確定前</span></div>
-      <div class="big-amount">${yen(estimateAll)}</div>
-      ${mom ? `<div class="muted">前月比 <span style="color:var(--pink);font-weight:600">${signedYen(mom.diff)}（${mom.pct >= 0 ? '+' : ''}${mom.pct}%）</span></div>` : ''}
+      <div class="estimate-head">${esc(monthLabel)}の収入 <span class="badge">確定前</span></div>
+      <div class="big-amount" id="monthAmount">${yen(estimateAll)}</div>
+      ${mom ? `<div class="muted">前月比 <span class="mom-up">${signedYen(mom.diff)}${mom.diff >= 0 ? ' ↑' : ' ↓'}（${mom.pct >= 0 ? '+' : ''}${mom.pct}%）</span></div>` : ''}
       ${dpReceived > 0 ? `<div class="daypay-line">${icon('yen')} 日払い受取済 <strong>${yen(dpReceived)}</strong> ／ 日払いを抜いた額 <strong>${yen(dpUnpaid)}</strong></div>` : ''}
       <div class="metric-grid">
-        <div><span class="muted">時給(基本給)</span><strong>${yen(bd.wage)}</strong></div>
-        <div><span class="muted">歩合</span><strong>${yen(backAll)}</strong></div>
+        <div><span class="muted">出勤日数</span><strong>${workDays}日</strong></div>
+        <div><span class="muted">1日平均</span><strong>${yen(dayAvg)}</strong></div>
         <div><span class="muted">総勤務時間</span><strong>${hours}h</strong></div>
       </div>
     </div>
@@ -142,8 +180,13 @@ export async function renderHome(el) {
     <div id="reminder"></div>
 
     <div class="card">
+      <div class="card-head"><h3>今月の収入の推移</h3></div>
+      <div id="dailyChart" class="chart-box"></div>
+    </div>
+
+    <div class="card">
       <div class="card-head">
-        <h3>今月の収入サマリー</h3>
+        <h3>収入の内訳</h3>
         <button class="link-btn" id="toReport" type="button">詳細を見る ›</button>
       </div>
       <div class="summary-body">
@@ -200,6 +243,8 @@ export async function renderHome(el) {
     '合計金額'
   );
 
+  renderDailyChart(el.querySelector('#dailyChart'), dailySeries(wage, items, cur), state.month);
+
   const recent = [...cur].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 7);
   el.querySelector('#recent').innerHTML = recent.map((s) => `
     <div class="chip" data-id="${esc(s.id)}">
@@ -220,44 +265,37 @@ export async function renderHome(el) {
   el.querySelector('#homeHelpBtn').onclick = () => navigate('help');
   el.querySelector('#homeSettingsBtn').onclick = () => navigate('settings');
 
-  const editGoal = async () => {
-    const next = await goalModal(goal);
-    if (next === null) return;
-    await saveProfile({ ...state.profile, monthlyGoal: next });
-    await loadAll();
-    renderHome(el);
+  // 今日の勤務を記録／編集する（既に今日のシフトがあれば編集で開く）
+  el.querySelector('#thRecord').onclick = () => {
+    setEditingShift(todayShift || null);
+    navigate('record');
   };
-  el.querySelector('#goalCta')?.addEventListener('click', editGoal);
-  el.querySelector('#goalCard')?.addEventListener('click', editGoal);
+
+  // 「働いた分が増えた」を感じられる軽いカウントアップ（過度な演出はしない）
+  countUp(el.querySelector('#thAmount'), todayAmount);
+  countUp(el.querySelector('#monthAmount'), estimateAll);
+
+  // 目標カード／CTA をタップ → 目標専用画面へ（達成状況・参考情報・編集）
+  el.querySelector('#goalCta')?.addEventListener('click', () => navigate('goal'));
+  el.querySelector('#goalCard')?.addEventListener('click', () => navigate('goal'));
 }
 
-// 今月の目標を入力するモーダル（PWA では window.prompt が使えないため自前実装）。
-// 保存で数値、キャンセル/背景タップで null を返す。0 を保存すると目標は未設定に戻る。
-function goalModal(current) {
-  return new Promise((resolve) => {
-    const back = document.createElement('div');
-    back.className = 'modal-backdrop';
-    back.innerHTML = `
-      <div class="modal-card">
-        <div class="modal-msg">今月の目標金額（円）</div>
-        <input id="goalInput" class="goal-input" type="number" inputmode="numeric"
-          placeholder="例: 300000" value="${current > 0 ? current : ''}">
-        <div class="modal-actions">
-          <button class="btn btn-ghost" id="goalCancel" type="button">キャンセル</button>
-          <button class="btn" id="goalSave" type="button">保存する</button>
-        </div>
-      </div>`;
-    document.body.appendChild(back);
-    requestAnimationFrame(() => back.classList.add('show'));
-    const input = back.querySelector('#goalInput');
-    setTimeout(() => input.focus(), 60);
-    const close = (val) => {
-      back.classList.remove('show');
-      setTimeout(() => back.remove(), 180);
-      resolve(val);
-    };
-    back.querySelector('#goalCancel').onclick = () => close(null);
-    back.querySelector('#goalSave').onclick = () => close(Math.max(0, Math.round(Number(input.value) || 0)));
-    back.addEventListener('click', (e) => { if (e.target === back) close(null); });
-  });
+// 金額を 0 → 目標値へ短時間でカウントアップ表示する（働いた成果が増える体感）。
+// 端末が「視差効果を減らす」設定なら即座に最終値を表示する。
+function countUp(node, to, duration = 650) {
+  if (!node) return;
+  const reduce = typeof matchMedia === 'function'
+    && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (reduce || !to || to <= 0 || typeof requestAnimationFrame !== 'function') {
+    node.textContent = yen(to);
+    return;
+  }
+  const start = performance.now();
+  const tick = (now) => {
+    const p = Math.min(1, (now - start) / duration);
+    const eased = 1 - Math.pow(1 - p, 3); // ease-out
+    node.textContent = yen(Math.round(to * eased));
+    if (p < 1) requestAnimationFrame(tick);
+  };
+  requestAnimationFrame(tick);
 }

@@ -7,6 +7,7 @@ import { eventIncomeInMonth, eventIncentiveDetail, eventBackRanking } from '../e
 import { isPremium } from '../entitlement.js';
 import { lockScreen, wireLockCta } from './premium-gate.js';
 import { toast } from './toast.js';
+import { navigate } from '../app.js';
 
 // レポートで表示中の月（YYYY-MM）。タブを開くたび今月にリセットし、‹ › で過去/未来へ切り替える。
 let reportMonth = null;
@@ -171,6 +172,7 @@ function drawReport(el) {
       <span class="rep-navlabel">${esc(month.replace('-', '年'))}月</span>
       <button id="repNext" class="rep-navbtn" type="button" aria-label="次の月">›</button>
     </div>
+    <button class="link-btn no-print" id="toHistory" type="button" style="margin:-4px 0 12px">${icon('chart')} 月ごとの収入履歴を見る ›</button>
     <div class="card" id="secSummary">
       <div class="row" style="justify-content:space-between"><span>出勤日数</span><strong>${cur.filter((s) => !s.absent && !s.recordOnly).length}日</strong></div>
       <div class="row" style="justify-content:space-between"><span>総勤務時間</span><strong>${monthlyWorkedHours(cur)}h</strong></div>
@@ -315,6 +317,8 @@ function drawReport(el) {
   const repNext = el.querySelector('#repNext');
   if (reportMonth >= thisMonth()) repNext.disabled = true;
   repNext.onclick = () => { reportMonth = shiftReportMonth(reportMonth, 1); drawReport(el); };
+
+  el.querySelector('#toHistory').onclick = () => navigate('history');
 
   // P/L の全体／歩合のみ トグル
   const plSeg = el.querySelector('#plSeg');

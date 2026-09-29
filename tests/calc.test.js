@@ -383,3 +383,29 @@ test('backItemStats: 未登録項目・空入力に耐性', () => {
   assert.deepEqual(st.get('a'), { count: 0, amount: 0 });
   assert.equal(st.has('ghost'), false);
 });
+
+import { dailySeries } from '../js/calc.js';
+
+test('dailySeries: 月内の日別収入を日付順に合算する', () => {
+  const wage = { hourlyWage: 1000 };
+  const shifts = [
+    { date: '2026-09-03', start: '20:00', end: '24:00', breakMin: 0, entries: [] }, // 4h=4000
+    { date: '2026-09-01', start: '18:00', end: '20:00', breakMin: 0, entries: [] }, // 2h=2000
+    { date: '2026-08-31', start: '18:00', end: '22:00', breakMin: 0, entries: [] }, // 別月=除外
+  ];
+  const s = dailySeries(wage, [], shifts, '2026-09');
+  assert.equal(s.length, 2);
+  assert.deepEqual(s[0], { date: '2026-09-01', day: 1, amount: 2000 });
+  assert.deepEqual(s[1], { date: '2026-09-03', day: 3, amount: 4000 });
+});
+
+test('dailySeries: 同じ日の複数シフトは合算', () => {
+  const wage = { hourlyWage: 1000 };
+  const shifts = [
+    { date: '2026-09-05', start: '18:00', end: '20:00', breakMin: 0, entries: [] }, // 2000
+    { date: '2026-09-05', start: '22:00', end: '24:00', breakMin: 0, entries: [] }, // 2000
+  ];
+  const s = dailySeries(wage, [], shifts, '2026-09');
+  assert.equal(s.length, 1);
+  assert.equal(s[0].amount, 4000);
+});

@@ -7,6 +7,8 @@ import { renderSettings } from './ui/settings.js';
 import { renderBackItems } from './ui/backitems.js';
 import { renderCustomers } from './ui/customers.js';
 import { renderMyPage } from './ui/mypage.js';
+import { renderGoal } from './ui/goal.js';
+import { renderHistory } from './ui/history.js';
 import { renderHelp } from './ui/help.js';
 import { maybeStartTour, startTour } from './ui/onboarding.js';
 import { esc } from './format.js';
@@ -22,14 +24,16 @@ const renderers = {
   home: renderHome, calendar: renderCalendar, record: renderRecord,
   report: renderReport, customers: renderCustomers, settings: renderSettings,
   backitems: renderBackItems, help: renderHelp, mypage: renderMyPage,
+  goal: renderGoal, history: renderHistory,
 };
 // 下タブのハイライト用（専用サブページは親タブを点灯させる）。
-const NAV_TAB = { backitems: 'settings' };
+// 収入履歴は「収入」タブ（report）配下の扱いで点灯させる。
+const NAV_TAB = { backitems: 'settings', history: 'report' };
 
 // 画面ごとのヘッダー。ホームと主要タブは「Lumi」ブランドバー、
 // メニューから開く設定・ヘルプ・記録は「‹ 戻る」バー（ピンクグラデ）。
-const BRAND_TABS = new Set(['home', 'calendar', 'report', 'customers', 'backitems']);
-const BACK_TITLES = { settings: '設定', help: 'ヘルプ', record: '記録', mypage: 'マイページ' };
+const BRAND_TABS = new Set(['home', 'calendar', 'report', 'goal', 'customers', 'backitems']);
+const BACK_TITLES = { settings: '設定', help: 'ヘルプ', record: '記録', mypage: 'マイページ', history: '収入履歴' };
 
 function brandBarHtml() {
   const bell = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9.5a6 6 0 0 1 12 0c0 4.6 1.8 5.7 1.8 5.7H4.2S6 14.1 6 9.5Z"/><path d="M10 19a2 2 0 0 0 4 0"/></svg>`;

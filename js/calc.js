@@ -262,6 +262,20 @@ export function annualSeries(wage, items, shifts, year) {
   return out;
 }
 
+// 指定月(YYYY-MM)の「日別収入」を日付順の配列で返す（時給＋歩合。同じ日は合算）。
+// 収入が「日ごとに育っていく」推移グラフのための純関数。欠勤日は shiftTotal が
+// 歩合のみになる（実働0のため時給は付かない）。収入が無い日は含めない。
+export function dailySeries(wage, items, shifts, month) {
+  const byDate = new Map();
+  for (const sh of (shifts || [])) {
+    if (!(sh.date || '').startsWith(month)) continue;
+    byDate.set(sh.date, (byDate.get(sh.date) || 0) + shiftTotal(wage, items, sh));
+  }
+  return [...byDate.entries()]
+    .sort((a, b) => a[0].localeCompare(b[0]))
+    .map(([date, amount]) => ({ date, day: Number(date.slice(8, 10)), amount }));
+}
+
 export function monthOverMonth(current, previous) {
   if (previous === null || previous === undefined) return null;
   const diff = current - previous;

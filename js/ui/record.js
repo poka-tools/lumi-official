@@ -15,11 +15,18 @@ const itemEmoji = (it) => it.icon || KIND_EMOJI[it.kind || 'income'] || '💰';
 
 export async function renderRecord(el) {
   const today = new Date().toISOString().slice(0, 10);
+  // 新規記録は「前回の勤務」の時間帯・休憩をプリフィル（2回目以降の入力を最小化）。
+  // 前回シフトが無ければプロフィールの初期値にフォールバックする。
+  const lastShift = editingShift ? null
+    : [...state.shifts]
+        .filter((x) => x.start && x.end && !x.recordOnly)
+        .sort((a, b) => (b.date || '').localeCompare(a.date))[0];
   const s = editingShift || {
     id: uid(), date: today,
-    start: state.profile.defaultStart || '20:00',
-    end: state.profile.defaultEnd || '01:00',
-    breakMin: Number(state.profile.defaultBreakMin) || 0, confirmed: false, entries: [],
+    start: (lastShift && lastShift.start) || state.profile.defaultStart || '20:00',
+    end: (lastShift && lastShift.end) || state.profile.defaultEnd || '01:00',
+    breakMin: Number((lastShift && lastShift.breakMin) ?? state.profile.defaultBreakMin) || 0,
+    confirmed: false, entries: [],
   };
   if (!s.id) s.id = uid();
 
@@ -126,10 +133,80 @@ export async function renderRecord(el) {
   updatePreview();
 
   el.querySelector('#save').onclick = async () => {
-    await put('shifts', { ...collect(), savedAt: Date.now() });
+    const saved = { ...collect(), savedAt: Date.now() };
+    await put('shifts', saved);
     setEditingShift(null);
     await loadAll();
-    toast('保存しました');
+    const total = shiftTotal(state.profile, state.backItems, saved);
+    if (saved.absent || total <= 0) {
+      toast('保存しました');
+    } else {
+      await showSavedCelebration(saved, total);
+    }
     navigate('home');
   };
+}
+
+// 保存後の「働いた分が増えた」お祝い表示。今日の給与を数字でカウントアップし、
+// 入ったバックを「＋¥○○ 項目名」で見せる。過度な演出はしない（軽いお祝い）。
+function showSavedCelebration(shift, total) {
+  const items = state.backItems;
+  const byId = new Map(items.map((it) => [it.id, it]));
+  const backRows = (shift.entries || [])
+    .map((e) => {
+      const it = byId.get(e.backItemId);
+      if (!it) return null;
+      const amt = backAmount(it, { count: e.count, sales: e.sales });
+      if (!amt) return null;
+      return { name: it.name || '歩合', emoji: itemEmoji(it), amt };
+    })
+    .filter(Boolean)
+    .sort((a, b) => b.amt - a.amt);
+
+  const isToday = shift.date === new Date().toISOString().slice(0, 10);
+  const dateLabel = isToday ? '今日の給与'
+    : `${Number((shift.date || '').slice(5, 7))}/${Number((shift.date || '').slice(8, 10))}の給与`;
+
+  return new Promise((resolve) => {
+    const back = document.createElement('div');
+    back.className = 'modal-backdrop';
+    back.innerHTML = `
+      <div class="modal-card save-cele">
+        <div class="sc-spark">✦</div>
+        <div class="sc-greet">おつかれさま♡</div>
+        <div class="sc-label">${esc(dateLabel)}</div>
+        <div class="sc-amount" id="scAmount">¥0</div>
+        ${backRows.length ? `<div class="sc-backs">${backRows.map((r) => `
+          <div class="sc-back-row">
+            <span class="sc-back-name">${esc(r.emoji)} ${esc(r.name)}</span>
+            <span class="sc-back-amt${r.amt < 0 ? ' neg' : ''}">${r.amt < 0 ? '−' : '＋'}${yen(Math.abs(r.amt))}</span>
+          </div>`).join('')}</div>` : ''}
+        <button class="btn sc-ok" id="scOk" type="button">ホームで確認する</button>
+      </div>`;
+    document.body.appendChild(back);
+    requestAnimationFrame(() => back.classList.add('show'));
+
+    // 金額のカウントアップ（視差効果を減らす設定なら即表示）
+    const amtEl = back.querySelector('#scAmount');
+    const reduce = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduce || typeof requestAnimationFrame !== 'function') {
+      amtEl.textContent = yen(total);
+    } else {
+      const start = performance.now();
+      const tick = (now) => {
+        const p = Math.min(1, (now - start) / 700);
+        amtEl.textContent = yen(Math.round(total * (1 - Math.pow(1 - p, 3))));
+        if (p < 1) requestAnimationFrame(tick);
+      };
+      requestAnimationFrame(tick);
+    }
+
+    const close = () => {
+      back.classList.remove('show');
+      setTimeout(() => back.remove(), 180);
+      resolve();
+    };
+    back.querySelector('#scOk').onclick = close;
+    back.addEventListener('click', (e) => { if (e.target === back) close(); });
+  });
 }
