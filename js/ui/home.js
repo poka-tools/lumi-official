@@ -144,7 +144,7 @@ export async function renderHome(el) {
     </div>` : '';
   const heroLabel = todayShift && todayShift.absent
     ? '本日は欠勤'
-    : (todayShift && todayShift.confirmed ? '今日の給与' : '今日の給与（予想）');
+    : '今日の成果';
   const heroCtaMain = todayShift ? '今日の勤務を編集する' : '今日の勤務を記録する';
   const heroCard = `
     <div class="card today-hero">
@@ -180,7 +180,7 @@ export async function renderHome(el) {
     <div id="reminder"></div>
 
     <div class="card">
-      <div class="card-head"><h3>今月の収入の推移</h3></div>
+      <div class="card-head"><h3>収入（今月）</h3></div>
       <div id="dailyChart" class="chart-box"></div>
     </div>
 
